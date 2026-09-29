@@ -1,22 +1,23 @@
 --[[
-                            QUANTUM ONYX HUB PROJECT
-            This was made by Quantum Onyx Team ( discord.gg/quantumonyx )
-            KEYSYSTEM UI built using claude ai
-            Service by Luarmor.net
-            Compiled by: Flazhy
-            Copyright © 2022-2026 Quantum Onyx Team - All Rights Reserved.
-]]--
+    QUANTUM ONYX HUB
+    Luarmor removed.
+    Authentication: Quantum Onyx VPS
+    Required key: hello
+]]
+
 local API_CONFIG = {
     BASE_URL = "https://api.quantumonyx.cc",
     FALLBACK_URL = "http://165.232.169.51:22527",
+
+    -- The only key accepted by this client.
+    REQUIRED_KEY = "hello",
+
     DISCORD_INVITE = "https://discord.gg/quantumonyx",
-    KEY_LINKS = {
-        Lootlabs = "https://ads.luarmor.net/get_key?for=Quantum_Onyx_Keysytem-kHpMaTAIVYzX",
-        Linkvertise = "https://ads.luarmor.net/get_key?for=Quantum_Onyx_Key_Sytem-BlvCDdtfIvfJ",
-    }
 }
 
-local Directory = "https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/Games"
+local Directory =
+    "https://raw.githubusercontent.com/flazhy/QuantumOnyx/refs/heads/main/Games"
+
 local Scripts = {
     Free = {
         [994732206] = Directory .. "/BloxFruits.lua",
@@ -25,8 +26,6 @@ local Scripts = {
     },
 }
 
-local STOCK_LOADER_URL = "https://api.luarmor.net/files/v4/loaders/0ae9fe4cf963e3a13d25eed0e2ce5940.lua"
-
 local FOLDER = "Quantum Onyx Hub"
 local KEY_FILE = FOLDER .. "/Key.json"
 
@@ -34,177 +33,387 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
+
 local GameId = game.GameId
 local gameId = GameId
 
-local HttpRequest = (syn and syn.request)
+--------------------------------------------------
+-- HTTP
+--------------------------------------------------
+
+local HttpRequest =
+    (syn and syn.request)
     or (http and http.request)
     or http_request
     or request
     or (fluxus and fluxus.request)
     or (delta and delta.request)
-local httpRequest = HttpRequest
 
-local IsFileFunc = isfile or function(file) return false end
-local isFileFunc = IsFileFunc
-local ReadFileFunc = readfile or function(file) return "" end
-local readFileFunc = ReadFileFunc
-local WriteFileFunc = writefile or function(file, content) end
-local writeFileFunc = WriteFileFunc
-local MakeFolderFunc = makefolder or function(folder) end
-local makeFolderFunc = MakeFolderFunc
-local IsFolderFunc = isfolder or function(folder) return false end
-local isFolderFunc = IsFolderFunc
+--------------------------------------------------
+-- FILESYSTEM
+--------------------------------------------------
+
+local IsFileFunc = isfile or function()
+    return false
+end
+
+local ReadFileFunc = readfile or function()
+    return ""
+end
+
+local WriteFileFunc = writefile or function()
+end
+
+local MakeFolderFunc = makefolder or function()
+end
+
+local IsFolderFunc = isfolder or function()
+    return false
+end
+
+--------------------------------------------------
+-- EXECUTOR
+--------------------------------------------------
 
 local function GetExecutorName()
-    if identifyexecutor then return identifyexecutor() end
-    if syn then return "Synapse X" end
-    if KRNL_LOADED then return "Krnl" end
-    if fluxus then return "Fluxus" end
-    if is_sirhurt_closure then return "SirHurt" end
+    if identifyexecutor then
+        local ok, result = pcall(identifyexecutor)
+
+        if ok and result then
+            return tostring(result)
+        end
+    end
+
+    if syn then
+        return "Synapse X"
+    end
+
+    if KRNL_LOADED then
+        return "Krnl"
+    end
+
+    if fluxus then
+        return "Fluxus"
+    end
+
+    if is_sirhurt_closure then
+        return "SirHurt"
+    end
+
     return "Unknown Executor"
 end
-local getExecutorName = GetExecutorName
+
+--------------------------------------------------
+-- HWID
+--------------------------------------------------
 
 local function GetHWID()
-    local hwid = nil
+    local hwid
+
     if gethwid then
-        pcall(function() hwid = gethwid() end)
+        pcall(function()
+            hwid = gethwid()
+        end)
     elseif get_hwid then
-        pcall(function() hwid = get_hwid() end)
+        pcall(function()
+            hwid = get_hwid()
+        end)
     end
+
     if not hwid or tostring(hwid) == "" then
         pcall(function()
             hwid = game:GetService("RbxAnalyticsService"):GetClientId()
         end)
     end
+
     if not hwid or tostring(hwid) == "" then
-        hwid = "FALLBACK-" .. tostring(LocalPlayer.UserId) .. "-" .. tostring(game.PlaceId)
+        hwid =
+            "FALLBACK-"
+            .. tostring(LocalPlayer.UserId)
+            .. "-"
+            .. tostring(game.PlaceId)
     end
+
     return tostring(hwid)
 end
-local getHWID = GetHWID
 
-local function Tween(obj, props, t, style, dir)
+--------------------------------------------------
+-- UI HELPERS
+--------------------------------------------------
+
+local function Tween(obj, props, time, style, direction)
     style = style or Enum.EasingStyle.Quint
-    dir = dir or Enum.EasingDirection.Out
-    TweenService:Create(obj, TweenInfo.new(t, style, dir), props):Play()
+    direction = direction or Enum.EasingDirection.Out
+
+    pcall(function()
+        TweenService:Create(
+            obj,
+            TweenInfo.new(time, style, direction),
+            props
+        ):Play()
+    end)
 end
 
 local function Protect(gui)
     local env = (getgenv and getgenv()) or _G
+
     if env.HIDEUI then
         gui.Parent = env.HIDEUI
+
     elseif gethui then
         gui.Parent = gethui()
+
     elseif syn and syn.protect_gui then
-        syn.protect_gui(gui)
+        pcall(function()
+            syn.protect_gui(gui)
+        end)
+
         gui.Parent = game:GetService("CoreGui")
+
     else
         gui.Parent = game:GetService("CoreGui")
     end
 end
 
 local function New(class, props, parent)
-    local inst = Instance.new(class)
-    for k, v in pairs(props) do
-        if k ~= "Children" and k ~= "Parent" then
-            pcall(function() inst[k] = v end)
+    local instance = Instance.new(class)
+
+    for key, value in pairs(props or {}) do
+        if key ~= "Children" and key ~= "Parent" then
+            pcall(function()
+                instance[key] = value
+            end)
         end
     end
-    if props.Children then
-        for _, c in ipairs(props.Children) do
-            pcall(function() c.Parent = inst end)
+
+    if props and props.Children then
+        for _, child in ipairs(props.Children) do
+            pcall(function()
+                child.Parent = instance
+            end)
         end
     end
-    inst.Parent = props.Parent or parent
-    return inst
+
+    instance.Parent = (props and props.Parent) or parent
+
+    return instance
 end
 
-local function CircleRipple(btn, mx, my)
+local function CircleRipple(button, mouseX, mouseY)
     task.spawn(function()
-        btn.ClipsDescendants = true
-        local nx = mx - btn.AbsolutePosition.X
-        local ny = my - btn.AbsolutePosition.Y
-        local sz = math.max(btn.AbsoluteSize.X, btn.AbsoluteSize.Y) * 1.6
-        local c = New("ImageLabel", {
-            Name = "Ripple",
-            Image = "rbxassetid://266543268",
-            ImageColor3 = Color3.fromRGB(255, 255, 255),
-            ImageTransparency = 0.82,
-            BackgroundTransparency = 1,
-            ZIndex = btn.ZIndex + 5,
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0, nx, 0, ny),
-        }, btn)
-        Tween(c, { Size = UDim2.new(0, sz, 0, sz), Position = UDim2.new(0.5, -sz/2, 0.5, -sz/2) }, 0.45, Enum.EasingStyle.Quad)
-        Tween(c, { ImageTransparency = 1 }, 0.45, Enum.EasingStyle.Linear)
-        task.wait(0.46)
-        c:Destroy()
+        pcall(function()
+            button.ClipsDescendants = true
+
+            local nx =
+                mouseX - button.AbsolutePosition.X
+
+            local ny =
+                mouseY - button.AbsolutePosition.Y
+
+            local size =
+                math.max(
+                    button.AbsoluteSize.X,
+                    button.AbsoluteSize.Y
+                ) * 1.6
+
+            local ripple = New("ImageLabel", {
+                Name = "Ripple",
+                Image = "rbxassetid://266543268",
+                ImageColor3 = Color3.fromRGB(255, 255, 255),
+                ImageTransparency = 0.82,
+                BackgroundTransparency = 1,
+                ZIndex = button.ZIndex + 5,
+
+                Size = UDim2.new(0, 0, 0, 0),
+
+                Position = UDim2.new(
+                    0,
+                    nx,
+                    0,
+                    ny
+                ),
+            }, button)
+
+            Tween(
+                ripple,
+                {
+                    Size = UDim2.new(
+                        0,
+                        size,
+                        0,
+                        size
+                    ),
+
+                    Position = UDim2.new(
+                        0.5,
+                        -size / 2,
+                        0.5,
+                        -size / 2
+                    ),
+                },
+                0.45,
+                Enum.EasingStyle.Quad
+            )
+
+            Tween(
+                ripple,
+                {
+                    ImageTransparency = 1
+                },
+                0.45,
+                Enum.EasingStyle.Linear
+            )
+
+            task.wait(0.46)
+
+            ripple:Destroy()
+        end)
     end)
 end
 
-local StarterGui = game:GetService("StarterGui")
-local function Notify(title, desc, accent, duration)
+local function Notify(title, description, accent, duration)
     pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = title or "Quantum Onyx",
-            Text = desc or "",
-            Duration = duration or 5,
-        })
+        StarterGui:SetCore(
+            "SendNotification",
+            {
+                Title = title or "Quantum Onyx",
+                Text = description or "",
+                Duration = duration or 5,
+            }
+        )
     end)
 end
+
+--------------------------------------------------
+-- TIME
+--------------------------------------------------
 
 local function ToTime(expire)
-    if not expire or expire <= 0 then return "Lifetime" end
+    if not expire or expire <= 0 then
+        return "Lifetime"
+    end
+
     local left = expire - os.time()
-    if left < 0 then return "Expired" end
+
+    if left < 0 then
+        return "Expired"
+    end
+
     local days = math.floor(left / 86400)
-    local hours = math.floor((left % 86400) / 3600)
-    local minutes = math.floor((left % 3600) / 60)
-    if days > 0 then return string.format("%dd %dh", days, hours) end
-    if hours > 0 then return string.format("%dh %dm", hours, minutes) end
-    return string.format("%dm", minutes)
+    local hours =
+        math.floor((left % 86400) / 3600)
+
+    local minutes =
+        math.floor((left % 3600) / 60)
+
+    if days > 0 then
+        return string.format(
+            "%dd %dh",
+            days,
+            hours
+        )
+    end
+
+    if hours > 0 then
+        return string.format(
+            "%dh %dm",
+            hours,
+            minutes
+        )
+    end
+
+    return string.format(
+        "%dm",
+        minutes
+    )
 end
+
+--------------------------------------------------
+-- KEY STORAGE
+--------------------------------------------------
 
 local function SaveKey(key)
     pcall(function()
-        if not IsFolderFunc(FOLDER) then MakeFolderFunc(FOLDER) end
-        WriteFileFunc(KEY_FILE, HttpService:JSONEncode({ key = tostring(key):gsub("%s+", "") }))
+        if not IsFolderFunc(FOLDER) then
+            MakeFolderFunc(FOLDER)
+        end
+
+        WriteFileFunc(
+            KEY_FILE,
+            HttpService:JSONEncode({
+                key = tostring(key):gsub("%s+", "")
+            })
+        )
     end)
 end
 
 local function LoadSavedKey()
-    if pcall(function() return IsFolderFunc(FOLDER) and IsFileFunc(KEY_FILE) end) and IsFolderFunc(FOLDER) and IsFileFunc(KEY_FILE) then
-        local ok, v = pcall(function()
-            return HttpService:JSONDecode(ReadFileFunc(KEY_FILE))
-        end)
-        if ok and type(v) == "table" and v.key then return tostring(v.key):gsub("%s+", "") end
+    local exists = false
+
+    pcall(function()
+        exists =
+            IsFolderFunc(FOLDER)
+            and IsFileFunc(KEY_FILE)
+    end)
+
+    if not exists then
+        return ""
     end
+
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(
+            ReadFileFunc(KEY_FILE)
+        )
+    end)
+
+    if ok
+        and type(data) == "table"
+        and data.key
+    then
+        return tostring(data.key):gsub("%s+", "")
+    end
+
     return ""
 end
 
 local function ClearKey()
     pcall(function()
-        if not IsFolderFunc(FOLDER) then MakeFolderFunc(FOLDER) end
-        WriteFileFunc(KEY_FILE, HttpService:JSONEncode({}))
+        if not IsFolderFunc(FOLDER) then
+            MakeFolderFunc(FOLDER)
+        end
+
+        WriteFileFunc(
+            KEY_FILE,
+            HttpService:JSONEncode({})
+        )
     end)
 end
 
+--------------------------------------------------
+-- SCRIPT KEY
+--------------------------------------------------
+
 local function ApplyScriptKey(key)
-    getgenv().script_key = key
-    getgenv().key = key
+    pcall(function()
+        getgenv().script_key = key
+        getgenv().key = key
+    end)
+
     if type(_G) == "table" then
         _G.script_key = key
     end
+
     if type(shared) == "table" then
         shared.script_key = key
     end
+
     pcall(function()
         if type(getrenv) == "function" then
             local env = getrenv()
+
             if type(env) == "table" then
                 env.script_key = key
             end
@@ -212,884 +421,1868 @@ local function ApplyScriptKey(key)
     end)
 end
 
+--------------------------------------------------
+-- SERVER AUTHENTICATION
+--------------------------------------------------
+
 local function VerifyWithServer(keyStr)
     if not HttpRequest then
-        return false, nil, "Executor lacks HTTP request capability."
+        return false, nil,
+            "Executor lacks HTTP request capability."
     end
 
-    local hwid = GetHWID()
-    local executor = GetExecutorName()
     local payload = HttpService:JSONEncode({
         key = keyStr,
-        hwid = hwid,
-        executor = executor,
-        game_id = game.PlaceId
+        hwid = GetHWID(),
+        executor = GetExecutorName(),
+        game_id = game.PlaceId,
     })
 
-    local ok, res = pcall(function()
+    local function Request(url)
         return HttpRequest({
-            Url = API_CONFIG.BASE_URL .. "/api/v1/authenticate",
+            Url = url .. "/api/v1/authenticate",
+
             Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
-            Body = payload
+
+            Headers = {
+                ["Content-Type"] =
+                    "application/json",
+            },
+
+            Body = payload,
         })
+    end
+
+    local ok, response = pcall(function()
+        return Request(API_CONFIG.BASE_URL)
     end)
 
-    if not ok or not res or res.StatusCode == 0 or res.StatusCode == 522 then
-        ok, res = pcall(function()
-            return HttpRequest({
-                Url = API_CONFIG.FALLBACK_URL .. "/api/v1/authenticate",
-                Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
-                Body = payload
-            })
+    if not ok
+        or not response
+        or response.StatusCode == 0
+        or response.StatusCode == 522
+    then
+        ok, response = pcall(function()
+            return Request(API_CONFIG.FALLBACK_URL)
         end)
     end
 
-    if not ok or not res then
-        return false, nil, "Could not reach verification server."
+    if not ok or not response then
+        return false, nil,
+            "Could not reach verification server."
     end
 
-    local data = nil
+    local data
+
     pcall(function()
-        data = HttpService:JSONDecode(res.Body)
+        data = HttpService:JSONDecode(
+            response.Body
+        )
     end)
 
-    if res.StatusCode == 200 and data and data.success then
+    if response.StatusCode == 200
+        and data
+        and data.success
+    then
         return true, data, nil
-    else
-        local errMsg = (data and data.error) or ("Error HTTP " .. tostring(res.StatusCode))
-        return false, nil, errMsg
     end
+
+    local errorMessage =
+        (data and data.error)
+        or (
+            "HTTP "
+            .. tostring(response.StatusCode)
+        )
+
+    return false, nil, errorMessage
 end
 
-local function IsPermanentKey(statusData)
-    local expire = statusData and statusData.auth_expire
-    return not expire or expire == 0 or expire == -1
-end
-
-local function IsExpiredNow(statusData)
-    local expire = statusData and statusData.auth_expire
-    if not expire or expire == 0 or expire == -1 then return false end
-    return expire <= os.time()
-end
-
-local function LoadStockLoader()
-    pcall(function()
-        loadstring(game:HttpGet(STOCK_LOADER_URL))()
-    end)
-end
+--------------------------------------------------
+-- LOAD FREE / PREMIUM
+--------------------------------------------------
 
 local function LoadScript(tier, scriptPayload)
     if tier == "Free" then
+
         local url = Scripts.Free[GameId]
-        if url then
-            pcall(function() loadstring(game:HttpGet(url))() end)
-        else
-            warn("[Quantum Onyx] No free script found for GameId: " .. tostring(GameId))
+
+        if not url then
+            warn(
+                "[Quantum Onyx] No free script found for GameId: "
+                .. tostring(GameId)
+            )
+
+            Notify(
+                "Quantum Onyx",
+                "No free script exists for this game.",
+                Color3.fromRGB(255, 150, 80),
+                6
+            )
+
+            return
         end
-    elseif tier == "Premium" then
-        if scriptPayload and type(scriptPayload) == "string" and #scriptPayload > 100 then
-            task.spawn(function()
-                local func, compileErr = loadstring(scriptPayload)
-                if func then
-                    local success, runtimeErr = pcall(func)
-                    if not success then
-                        warn("[Quantum BloxFruits] Runtime error: " .. tostring(runtimeErr))
-                        Notify("Script Runtime Error", tostring(runtimeErr):sub(1, 80), Color3.fromRGB(255, 90, 110), 10)
-                    end
-                else
-                    warn("[Quantum BloxFruits] Compilation error: " .. tostring(compileErr))
-                    Notify("Script Compile Error", tostring(compileErr):sub(1, 80), Color3.fromRGB(255, 90, 110), 10)
-                end
+
+        task.spawn(function()
+            local ok, result = pcall(function()
+                return game:HttpGet(url)
             end)
-        else
-            warn("[Quantum BloxFruits] Payload empty from server, loading Luarmor loader fallback...")
-            LoadStockLoader()
+
+            if not ok or not result then
+                Notify(
+                    "Quantum Onyx",
+                    "Failed to download the free script.",
+                    Color3.fromRGB(255, 90, 110),
+                    7
+                )
+
+                return
+            end
+
+            local func, compileError =
+                loadstring(result)
+
+            if not func then
+                warn(
+                    "[Quantum Onyx] Free script compile error: "
+                    .. tostring(compileError)
+                )
+
+                return
+            end
+
+            local success, runtimeError =
+                pcall(func)
+
+            if not success then
+                warn(
+                    "[Quantum Onyx] Free script runtime error: "
+                    .. tostring(runtimeError)
+                )
+            end
+        end)
+
+    elseif tier == "Premium" then
+
+        if type(scriptPayload) ~= "string"
+            or #scriptPayload < 1
+        then
+            warn(
+                "[Quantum Onyx] VPS returned an empty Premium script."
+            )
+
+            Notify(
+                "Quantum Onyx",
+                "Premium script was not returned by the server.",
+                Color3.fromRGB(255, 90, 110),
+                8
+            )
+
+            return
         end
+
+        task.spawn(function()
+            local func, compileError =
+                loadstring(scriptPayload)
+
+            if not func then
+                warn(
+                    "[Quantum Onyx] Premium compile error: "
+                    .. tostring(compileError)
+                )
+
+                Notify(
+                    "Script Compile Error",
+                    tostring(compileError):sub(1, 100),
+                    Color3.fromRGB(255, 90, 110),
+                    10
+                )
+
+                return
+            end
+
+            local success, runtimeError =
+                pcall(func)
+
+            if not success then
+                warn(
+                    "[Quantum Onyx] Premium runtime error: "
+                    .. tostring(runtimeError)
+                )
+
+                Notify(
+                    "Script Runtime Error",
+                    tostring(runtimeError):sub(1, 100),
+                    Color3.fromRGB(255, 90, 110),
+                    10
+                )
+            end
+        end)
     end
 end
+
+--------------------------------------------------
+-- AUTHENTICATION
+--------------------------------------------------
+
 local function ResolveAndLoadKey(keyStr, hooks)
     hooks = hooks or {}
-    local onStatus = hooks.onStatus or function() end
-    local onSuccess = hooks.onSuccess or function() end
-    local onFail = hooks.onFail or function() end
 
-    keyStr = keyStr and tostring(keyStr):gsub("%s+", "") or ""
+    local onStatus =
+        hooks.onStatus
+        or function()
+        end
+
+    local onSuccess =
+        hooks.onSuccess
+        or function()
+        end
+
+    local onFail =
+        hooks.onFail
+        or function()
+        end
+
+    keyStr =
+        tostring(keyStr or ""):gsub("%s+", "")
+
     if keyStr == "" then
-        onFail("empty")
+        onFail(
+            "empty",
+            "Please enter the key."
+        )
+
         return
     end
+
+    --------------------------------------------------
+    -- Client-side key format check
+    --------------------------------------------------
+
+    if keyStr ~= API_CONFIG.REQUIRED_KEY then
+        onFail(
+            "KEY_INCORRECT",
+            "Incorrect key."
+        )
+
+        return
+    end
+
+    --------------------------------------------------
+    -- Server verification
+    --------------------------------------------------
 
     local startTime = os.clock()
-    onStatus("Verifying key with Luarmor...")
 
-    local sdkOk, LuarmorAPI = pcall(function()
-        return loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+    onStatus(
+        "Verifying with Quantum Onyx VPS..."
+    )
+
+    local success, authData, errorMessage =
+        VerifyWithServer(keyStr)
+
+    if not success then
+        onFail(
+            "SERVER_REJECTED",
+            errorMessage
+                or "The server rejected the key."
+        )
+
+        return
+    end
+
+    if type(authData) ~= "table" then
+        onFail(
+            "INVALID_RESPONSE",
+            "Invalid response from authentication server."
+        )
+
+        return
+    end
+
+    --------------------------------------------------
+    -- Expiration
+    --------------------------------------------------
+
+    local expire = authData.auth_expire
+
+    if expire
+        and expire ~= 0
+        and expire ~= -1
+        and expire <= os.time()
+    then
+        ClearKey()
+
+        onFail(
+            "KEY_EXPIRED",
+            "Key expired."
+        )
+
+        return
+    end
+
+    --------------------------------------------------
+    -- Save authentication data
+    --------------------------------------------------
+
+    ApplyScriptKey(keyStr)
+    SaveKey(keyStr)
+
+    pcall(function()
+        getgenv().key_expire =
+            authData.auth_expire or 0
+
+        getgenv().key_note =
+            authData.note or ""
+
+        getgenv().key_executions =
+            authData.total_executions or 0
     end)
 
-    if not sdkOk or type(LuarmorAPI) ~= "table" then
-        onFail("sdk_unreachable")
-        return
-    end
+    local elapsed =
+        string.format(
+            "%.2fs",
+            os.clock() - startTime
+        )
 
-    LuarmorAPI.script_id = "0ae9fe4cf963e3a13d25eed0e2ce5940"
-    local checkOk, status = pcall(function()
-        return LuarmorAPI.check_key(keyStr)
-    end)
+    local permanent =
+        not expire
+        or expire == 0
+        or expire == -1
 
-    if not checkOk or type(status) ~= "table" then
-        onFail("check_error")
-        return
-    end
+    --------------------------------------------------
+    -- Success
+    --------------------------------------------------
 
-    local code = status.code or ""
-    local data = status.data
+    onSuccess({
+        permanent = permanent,
+        expire = expire or 0,
+        elapsedStr = elapsed,
+    })
 
-    if code ~= "KEY_VALID" then
-        ClearKey()
-        onFail(code, status.message)
-        return
-    end
-    if IsExpiredNow(data) then
-        ClearKey()
-        onFail("KEY_EXPIRED", "Key expired")
-        return
-    end
+    --------------------------------------------------
+    -- Load server-provided Premium script
+    --------------------------------------------------
 
-    local permanent = IsPermanentKey(data)
-    local elapsedStr = string.format("%.2fs", os.clock() - startTime)
-    onStatus("Key valid! Loading script from VPS...")
-    local ok, authData, errorMsg = VerifyWithServer(keyStr)
-
-    if ok and authData and authData.script then
-        ApplyScriptKey(keyStr)
-        SaveKey(keyStr)
-        getgenv().key_expire = data and data.auth_expire or 0
-        getgenv().key_note = data and data.note or ""
-        getgenv().key_executions = data and data.total_executions or 0
-
-        onSuccess({
-            permanent = permanent,
-            expire = getgenv().key_expire,
-            elapsedStr = elapsedStr,
-        })
-        LoadScript("Premium", authData.script)
+    if type(authData.script) == "string"
+        and #authData.script > 0
+    then
+        LoadScript(
+            "Premium",
+            authData.script
+        )
     else
-        onStatus("VPS fallback — loading via Luarmor...")
-        ApplyScriptKey(keyStr)
-        SaveKey(keyStr)
-        onSuccess({
-            permanent = permanent,
-            expire = data and data.auth_expire or 0,
-            elapsedStr = elapsedStr,
-            fellBack = true,
-        })
-        LoadStockLoader()
+        onFail(
+            "NO_SCRIPT",
+            "Authentication succeeded, but the VPS returned no Premium script."
+        )
     end
 end
 
+--------------------------------------------------
+-- KEY UI
+--------------------------------------------------
 
 local function ShowKeyUI()
-    local done = false
-    local isPremium = false
     local submitting = false
+    local done = false
 
-    local supportInfo = {
-        { label = "Discord", value = "discord.gg/quantumonyx" },
-        { label = "Game", value = (pcall(function() return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name end) and game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name) or "Unknown" },
-        { label = "Version", value = "v.Freemium" },
-    }
+    local productName = "Unknown"
+
+    pcall(function()
+        productName =
+            game:GetService(
+                "MarketplaceService"
+            ):GetProductInfo(
+                game.PlaceId
+            ).Name
+    end)
 
     local SG = Instance.new("ScreenGui")
-    SG.Name = "KL_" .. tostring(math.random(1e6))
-    SG.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+    SG.Name =
+        "QuantumOnyx_" ..
+        tostring(math.random(100000, 999999))
+
+    SG.ZIndexBehavior =
+        Enum.ZIndexBehavior.Global
+
     SG.ResetOnSpawn = false
     SG.IgnoreGuiInset = true
+
     Protect(SG)
 
+    --------------------------------------------------
+    -- BACKDROP
+    --------------------------------------------------
+
     local Backdrop = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundColor3 =
+            Color3.fromRGB(0, 0, 0),
+
         BackgroundTransparency = 0.45,
+
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 1, 0),
+
+        Size =
+            UDim2.new(1, 0, 1, 0),
+
         ZIndex = 200,
+
         Parent = SG,
     })
 
-    local W, H = 450, 310
+    --------------------------------------------------
+    -- CARD
+    --------------------------------------------------
+
+    local W = 450
+    local H = 310
+
     local Card = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, W, 0, H),
-        BackgroundColor3 = Color3.fromRGB(15, 12, 24),
-        BackgroundTransparency = 0,
+        AnchorPoint =
+            Vector2.new(0.5, 0.5),
+
+        Position =
+            UDim2.new(
+                0.5,
+                0,
+                0.5,
+                0
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                W,
+                0,
+                H
+            ),
+
+        BackgroundColor3 =
+            Color3.fromRGB(
+                15,
+                12,
+                24
+            ),
+
         BorderSizePixel = 0,
+
         ZIndex = 201,
+
         ClipsDescendants = true,
+
         Parent = SG,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 14) }),
-            New("UIStroke", {
-                Color = Color3.fromRGB(120, 60, 220),
-                Transparency = 0.3,
-                Thickness = 1.5,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 14),
             }),
-        }
+
+            New("UIStroke", {
+                Color =
+                    Color3.fromRGB(
+                        120,
+                        60,
+                        220
+                    ),
+
+                Transparency = 0.3,
+
+                Thickness = 1.5,
+
+                ApplyStrokeMode =
+                    Enum.ApplyStrokeMode.Border,
+            }),
+        },
     })
 
-    New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(80, 20, 160),
-        BackgroundTransparency = 0.85,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, -60, 0, -60),
-        Size = UDim2.new(0, 220, 0, 220),
-        ZIndex = 201,
-        Parent = Card,
-        Children = { New("UICorner", { CornerRadius = UDim.new(1, 0) }) }
-    })
-
-    New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(40, 10, 110),
-        BackgroundTransparency = 0.85,
-        BorderSizePixel = 0,
-        Position = UDim2.new(1, -100, 1, -100),
-        Size = UDim2.new(0, 180, 0, 180),
-        ZIndex = 201,
-        Parent = Card,
-        Children = { New("UICorner", { CornerRadius = UDim.new(1, 0) }) }
-    })
+    --------------------------------------------------
+    -- HEADER
+    --------------------------------------------------
 
     local Header = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-        BackgroundTransparency = 0,
+        BackgroundColor3 =
+            Color3.fromRGB(
+                22,
+                16,
+                36
+            ),
+
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 44),
+
+        Size =
+            UDim2.new(
+                1,
+                0,
+                0,
+                44
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 14) }),
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-                BackgroundTransparency = 0,
-                BorderSizePixel = 0,
-                Position = UDim2.new(0, 0, 0.5, 0),
-                Size = UDim2.new(1, 0, 0.5, 0),
-                ZIndex = 202
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 14),
             }),
-        }
+
+            New("Frame", {
+                BackgroundColor3 =
+                    Color3.fromRGB(
+                        22,
+                        16,
+                        36
+                    ),
+
+                BorderSizePixel = 0,
+
+                Position =
+                    UDim2.new(
+                        0,
+                        0,
+                        0.5,
+                        0
+                    ),
+
+                Size =
+                    UDim2.new(
+                        1,
+                        0,
+                        0.5,
+                        0
+                    ),
+
+                ZIndex = 202,
+            }),
+        },
     })
 
     New("ImageLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 13, 0.5, -8),
-        Size = UDim2.new(0, 16, 0, 16),
-        Image = "rbxassetid://7733992528",
-        ImageColor3 = Color3.fromRGB(155, 90, 255),
+
+        Position =
+            UDim2.new(
+                0,
+                13,
+                0.5,
+                -8
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                16,
+                0,
+                16
+            ),
+
+        Image =
+            "rbxassetid://7733992528",
+
+        ImageColor3 =
+            Color3.fromRGB(
+                155,
+                90,
+                255
+            ),
+
         ZIndex = 203,
-        Parent = Header
+
+        Parent = Header,
     })
 
     New("TextLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 35, 0, 0),
-        Size = UDim2.new(1, -130, 1, 0),
-        Font = Enum.Font.FredokaOne,
-        Text = "Quantum Onyx — Key System",
-        TextColor3 = Color3.fromRGB(220, 200, 255),
+
+        Position =
+            UDim2.new(
+                0,
+                35,
+                0,
+                0
+            ),
+
+        Size =
+            UDim2.new(
+                1,
+                -80,
+                1,
+                0
+            ),
+
+        Font =
+            Enum.Font.FredokaOne,
+
+        Text =
+            "Quantum Onyx — Authentication",
+
+        TextColor3 =
+            Color3.fromRGB(
+                220,
+                200,
+                255
+            ),
+
         TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 203,
-        Parent = Header
-    })
 
-    New("Frame", {
-        AnchorPoint = Vector2.new(1, 0.5),
-        BackgroundColor3 = Color3.fromRGB(30, 60, 20),
-        BackgroundTransparency = 0,
-        BorderSizePixel = 0,
-        Position = UDim2.new(1, -40, 0.5, 0),
-        Size = UDim2.new(0, 72, 0, 20),
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
         ZIndex = 203,
+
         Parent = Header,
-        Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 5) }),
-            New("UIStroke", { Color = Color3.fromRGB(80, 200, 110), Transparency = 0.3, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-            New("TextLabel", {
-                BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 1, 0),
-                Font = Enum.Font.GothamBold,
-                Text = "Freemium",
-                TextColor3 = Color3.fromRGB(130, 235, 160),
-                TextSize = 10,
-                TextXAlignment = Enum.TextXAlignment.Center,
-                ZIndex = 204
-            }),
-        }
     })
 
-    local CloseBtn = New("ImageButton", {
+    --------------------------------------------------
+    -- CLOSE
+    --------------------------------------------------
+
+    local CloseBtn = New("TextButton", {
         BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -8, 0.5, 0),
-        Size = UDim2.new(0, 20, 0, 20),
-        Image = "rbxassetid://79324227570635",
-        ImageColor3 = Color3.fromRGB(200, 80, 80),
-        ZIndex = 203,
-        Parent = Header
+
+        AnchorPoint =
+            Vector2.new(1, 0.5),
+
+        Position =
+            UDim2.new(
+                1,
+                -10,
+                0.5,
+                0
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                25,
+                0,
+                25
+            ),
+
+        Text = "×",
+
+        Font =
+            Enum.Font.GothamBold,
+
+        TextSize = 20,
+
+        TextColor3 =
+            Color3.fromRGB(
+                220,
+                80,
+                90
+            ),
+
+        ZIndex = 204,
+
+        Parent = Header,
     })
 
     CloseBtn.MouseButton1Click:Connect(function()
         SG:Destroy()
     end)
 
+    --------------------------------------------------
+    -- HEADER LINE
+    --------------------------------------------------
+
     New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(120, 60, 220),
+        BackgroundColor3 =
+            Color3.fromRGB(
+                120,
+                60,
+                220
+            ),
+
         BackgroundTransparency = 0.3,
+
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 0, 44),
-        Size = UDim2.new(1, 0, 0, 1),
+
+        Position =
+            UDim2.new(
+                0,
+                0,
+                0,
+                44
+            ),
+
+        Size =
+            UDim2.new(
+                1,
+                0,
+                0,
+                1
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
     })
 
-    local LW = 180
-    local RX = LW + 18
-    local RW = W - RX - 10
-
-    New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(100, 50, 200),
-        BackgroundTransparency = 0.5,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, LW + 8, 0, 52),
-        Size = UDim2.new(0, 1, 0, H - 60),
-        ZIndex = 202,
-        Parent = Card,
-    })
+    --------------------------------------------------
+    -- INFORMATION BOX
+    --------------------------------------------------
 
     local InfoBox = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-        BackgroundTransparency = 0,
+        BackgroundColor3 =
+            Color3.fromRGB(
+                22,
+                16,
+                36
+            ),
+
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 8, 0, 52),
-        Size = UDim2.new(0, LW, 0, 112),
+
+        Position =
+            UDim2.new(
+                0,
+                10,
+                0,
+                58
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                170,
+                0,
+                125
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-            New("UIStroke", { Color = Color3.fromRGB(100, 50, 190), Transparency = 0.4, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-        }
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 8),
+            }),
+
+            New("UIStroke", {
+                Color =
+                    Color3.fromRGB(
+                        100,
+                        50,
+                        190
+                    ),
+
+                Transparency = 0.4,
+
+                Thickness = 1,
+
+                ApplyStrokeMode =
+                    Enum.ApplyStrokeMode.Border,
+            }),
+        },
     })
 
     New("TextLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 9, 0, 5),
-        Size = UDim2.new(1, -14, 0, 13),
-        Font = Enum.Font.GothamBold,
-        Text = "Information",
-        TextColor3 = Color3.fromRGB(160, 110, 240),
-        TextSize = 9,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 203,
-        Parent = InfoBox
-    })
 
-    New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(110, 60, 200),
-        BackgroundTransparency = 0.6,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 7, 0, 20),
-        Size = UDim2.new(1, -14, 0, 1),
+        Position =
+            UDim2.new(
+                0,
+                10,
+                0,
+                7
+            ),
+
+        Size =
+            UDim2.new(
+                1,
+                -20,
+                0,
+                16
+            ),
+
+        Font =
+            Enum.Font.GothamBold,
+
+        Text = "Information",
+
+        TextColor3 =
+            Color3.fromRGB(
+                160,
+                110,
+                240
+            ),
+
+        TextSize = 10,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
         ZIndex = 203,
+
         Parent = InfoBox,
     })
 
-    local rowY = 26
-    for _, info in ipairs(supportInfo) do
+    local info = {
+        {
+            "Game",
+            productName,
+        },
+
+        {
+            "Version",
+            "v.Freemium",
+        },
+
+        {
+            "Auth",
+            "Quantum Onyx VPS",
+        },
+
+        {
+            "Key",
+            "hello",
+        },
+    }
+
+    local infoY = 31
+
+    for _, entry in ipairs(info) do
         New("TextLabel", {
             BackgroundTransparency = 1,
-            Position = UDim2.new(0, 9, 0, rowY),
-            Size = UDim2.new(0, 55, 0, 12),
-            Font = Enum.Font.GothamBold,
-            Text = (info.label or "") .. ":",
-            TextColor3 = Color3.fromRGB(140, 110, 190),
+
+            Position =
+                UDim2.new(
+                    0,
+                    10,
+                    0,
+                    infoY
+                ),
+
+            Size =
+                UDim2.new(
+                    0,
+                    48,
+                    0,
+                    15
+                ),
+
+            Font =
+                Enum.Font.GothamBold,
+
+            Text =
+                entry[1] .. ":",
+
+            TextColor3 =
+                Color3.fromRGB(
+                    140,
+                    110,
+                    190
+                ),
+
             TextSize = 9,
-            TextXAlignment = Enum.TextXAlignment.Left,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
             ZIndex = 203,
-            Parent = InfoBox
+
+            Parent = InfoBox,
         })
+
         New("TextLabel", {
             BackgroundTransparency = 1,
-            Position = UDim2.new(0, 64, 0, rowY),
-            Size = UDim2.new(1, -70, 0, 12),
-            Font = Enum.Font.Gotham,
-            Text = tostring(info.value or ""),
-            TextColor3 = Color3.fromRGB(200, 180, 240),
+
+            Position =
+                UDim2.new(
+                    0,
+                    58,
+                    0,
+                    infoY
+                ),
+
+            Size =
+                UDim2.new(
+                    1,
+                    -68,
+                    0,
+                    15
+                ),
+
+            Font =
+                Enum.Font.Gotham,
+
+            Text =
+                tostring(entry[2]),
+
+            TextColor3 =
+                Color3.fromRGB(
+                    205,
+                    185,
+                    240
+                ),
+
             TextSize = 9,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTruncate = Enum.TextTruncate.AtEnd,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextTruncate =
+                Enum.TextTruncate.AtEnd,
+
             ZIndex = 203,
-            Parent = InfoBox
+
+            Parent = InfoBox,
         })
-        rowY = rowY + 16
-        if rowY > 96 then break end
+
+        infoY = infoY + 22
     end
 
-    local ProfileBox = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-        BackgroundTransparency = 0,
+    --------------------------------------------------
+    -- NOTICE
+    --------------------------------------------------
+
+    local Notice = New("Frame", {
+        BackgroundColor3 =
+            Color3.fromRGB(
+                22,
+                16,
+                36
+            ),
+
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 8, 0, 170),
-        Size = UDim2.new(0, LW, 0, 128),
+
+        Position =
+            UDim2.new(
+                0,
+                190,
+                0,
+                58
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                250,
+                0,
+                55
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-            New("UIStroke", { Color = Color3.fromRGB(100, 50, 190), Transparency = 0.4, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-        }
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 7),
+            }),
+
+            New("UIStroke", {
+                Color =
+                    Color3.fromRGB(
+                        80,
+                        200,
+                        110
+                    ),
+
+                Transparency = 0.4,
+
+                Thickness = 1,
+
+                ApplyStrokeMode =
+                    Enum.ApplyStrokeMode.Border,
+            }),
+        },
     })
 
     New("TextLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 9, 0, 5),
-        Size = UDim2.new(1, -14, 0, 13),
-        Font = Enum.Font.GothamBold,
-        Text = "User Profile",
-        TextColor3 = Color3.fromRGB(160, 110, 240),
-        TextSize = 9,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 203,
-        Parent = ProfileBox
-    })
 
-    New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(110, 60, 200),
-        BackgroundTransparency = 0.6,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 7, 0, 20),
-        Size = UDim2.new(1, -14, 0, 1),
-        ZIndex = 203,
-        Parent = ProfileBox,
-    })
+        Position =
+            UDim2.new(
+                0,
+                12,
+                0,
+                4
+            ),
 
-    local AvatarRing = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(110, 55, 210),
-        BackgroundTransparency = 0.3,
-        BorderSizePixel = 0,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 28),
-        Size = UDim2.new(0, 52, 0, 52),
-        ZIndex = 203,
-        Parent = ProfileBox,
-        Children = { New("UICorner", { CornerRadius = UDim.new(1, 0) }) }
-    })
+        Size =
+            UDim2.new(
+                1,
+                -20,
+                1,
+                -8
+            ),
 
-    local AvatarImg = New("ImageLabel", {
-        BackgroundColor3 = Color3.fromRGB(30, 15, 55),
-        BackgroundTransparency = 0,
-        BorderSizePixel = 0,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 46, 0, 46),
-        Image = "",
-        ZIndex = 204,
-        Parent = AvatarRing,
-        Children = { New("UICorner", { CornerRadius = UDim.new(1, 0) }) }
-    })
+        Font =
+            Enum.Font.Gotham,
 
-    local DisplayNameLbl = New("TextLabel", {
-        BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 86),
-        Size = UDim2.new(1, -12, 0, 14),
-        Font = Enum.Font.GothamBold,
-        Text = LocalPlayer.DisplayName,
-        TextColor3 = Color3.fromRGB(220, 205, 255),
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextTruncate = Enum.TextTruncate.AtEnd,
-        ZIndex = 203,
-        Parent = ProfileBox
-    })
+        Text =
+            "Quantum Onyx authentication.\n"
+            .. "Enter the required key to continue.",
 
-    New("TextLabel", {
-        BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 102),
-        Size = UDim2.new(1, -12, 0, 12),
-        Font = Enum.Font.Gotham,
-        Text = "@" .. LocalPlayer.Name,
-        TextColor3 = Color3.fromRGB(145, 125, 185),
-        TextSize = 9,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextTruncate = Enum.TextTruncate.AtEnd,
-        ZIndex = 203,
-        Parent = ProfileBox
-    })
+        TextColor3 =
+            Color3.fromRGB(
+                140,
+                230,
+                170
+            ),
 
-    task.spawn(function()
-        local ok, img = pcall(function()
-            return game:GetService("Players"):GetUserThumbnailAsync(
-                LocalPlayer.UserId,
-                Enum.ThumbnailType.HeadShot,
-                Enum.ThumbnailSize.Size100x100
-            )
-        end)
-        if ok and img then AvatarImg.Image = img end
-    end)
-
-    local NoticeBg = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-        BackgroundTransparency = 0,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, RX, 0, 52),
-        Size = UDim2.new(0, RW, 0, 50),
-        ZIndex = 202,
-        Parent = Card,
-        Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 7) }),
-            New("UIStroke", { Color = Color3.fromRGB(80, 200, 110), Transparency = 0.4, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-            New("Frame", {
-                BackgroundColor3 = Color3.fromRGB(80, 200, 110),
-                BorderSizePixel = 0,
-                Position = UDim2.new(0, 0, 0.5, -10),
-                Size = UDim2.new(0, 3, 0, 20),
-                ZIndex = 203,
-                Children = { New("UICorner", { CornerRadius = UDim.new(1, 0) }) }
-            })
-        }
-    })
-
-    New("TextLabel", {
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 12, 0, 0),
-        Size = UDim2.new(1, -16, 1, 0),
-        Font = Enum.Font.Gotham,
-        TextColor3 = Color3.fromRGB(140, 230, 170),
         TextSize = 10,
+
         TextWrapped = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
+        TextYAlignment =
+            Enum.TextYAlignment.Center,
+
         ZIndex = 203,
-        Text = "Freemium — key is optional.\nEnter a key to unlock premium features.",
-        Parent = NoticeBg
+
+        Parent = Notice,
     })
 
-    local LRMBar = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(22, 16, 36),
-        BackgroundTransparency = 0,
+    --------------------------------------------------
+    -- AUTH STATUS
+    --------------------------------------------------
+
+    local StatusBox = New("Frame", {
+        BackgroundColor3 =
+            Color3.fromRGB(
+                22,
+                16,
+                36
+            ),
+
         BorderSizePixel = 0,
-        Position = UDim2.new(0, RX, 0, 110),
-        Size = UDim2.new(0, RW, 0, 28),
+
+        Position =
+            UDim2.new(
+                0,
+                190,
+                0,
+                122
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                250,
+                0,
+                30
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-            New("UIStroke", { Color = Color3.fromRGB(100, 50, 190), Transparency = 0.4, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-        }
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 6),
+            }),
+
+            New("UIStroke", {
+                Color =
+                    Color3.fromRGB(
+                        100,
+                        50,
+                        190
+                    ),
+
+                Transparency = 0.4,
+
+                Thickness = 1,
+
+                ApplyStrokeMode =
+                    Enum.ApplyStrokeMode.Border,
+            }),
+        },
     })
 
-    New("ImageLabel", {
+    local StatusSystem = New("TextLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 8, 0.5, -6),
-        Size = UDim2.new(0, 12, 0, 12),
-        Image = "rbxassetid://7733992528",
-        ImageColor3 = Color3.fromRGB(150, 95, 225),
-        ZIndex = 203,
-        Parent = LRMBar
-    })
 
-    local LRMStatusLabel = New("TextLabel", {
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 25, 0, 0),
-        Size = UDim2.new(1, -30, 1, 0),
-        Font = Enum.Font.GothamBold,
-        Text = "Ready for Authentication",
-        TextColor3 = Color3.fromRGB(180, 160, 225),
+        Position =
+            UDim2.new(
+                0,
+                10,
+                0,
+                0
+            ),
+
+        Size =
+            UDim2.new(
+                1,
+                -20,
+                1,
+                0
+            ),
+
+        Font =
+            Enum.Font.GothamBold,
+
+        Text =
+            "Ready for Authentication",
+
+        TextColor3 =
+            Color3.fromRGB(
+                180,
+                160,
+                225
+            ),
+
         TextSize = 10,
-        TextXAlignment = Enum.TextXAlignment.Left,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
         ZIndex = 203,
-        Parent = LRMBar
+
+        Parent = StatusBox,
     })
+
+    --------------------------------------------------
+    -- KEY INPUT
+    --------------------------------------------------
 
     local InputBg = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(10, 8, 18),
-        BackgroundTransparency = 0,
+        BackgroundColor3 =
+            Color3.fromRGB(
+                10,
+                8,
+                18
+            ),
+
         BorderSizePixel = 0,
-        Position = UDim2.new(0, RX, 0, 146),
-        Size = UDim2.new(0, RW, 0, 34),
+
+        Position =
+            UDim2.new(
+                0,
+                190,
+                0,
+                163
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                250,
+                0,
+                38
+            ),
+
         ZIndex = 202,
+
         Parent = Card,
+
         Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 7) }),
-            New("UIStroke", { Color = Color3.fromRGB(120, 60, 220), Transparency = 0.3, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-        }
+            New("UICorner", {
+                CornerRadius =
+                    UDim.new(0, 7),
+            }),
+
+            New("UIStroke", {
+                Color =
+                    Color3.fromRGB(
+                        120,
+                        60,
+                        220
+                    ),
+
+                Transparency = 0.3,
+
+                Thickness = 1,
+
+                ApplyStrokeMode =
+                    Enum.ApplyStrokeMode.Border,
+            }),
+        },
     })
 
     New("ImageLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0.5, -7),
-        Size = UDim2.new(0, 14, 0, 14),
-        Image = "rbxassetid://7733992528",
-        ImageColor3 = Color3.fromRGB(140, 90, 215),
+
+        Position =
+            UDim2.new(
+                0,
+                10,
+                0.5,
+                -7
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                14,
+                0,
+                14
+            ),
+
+        Image =
+            "rbxassetid://7733992528",
+
+        ImageColor3 =
+            Color3.fromRGB(
+                140,
+                90,
+                215
+            ),
+
         ZIndex = 203,
-        Parent = InputBg
+
+        Parent = InputBg,
     })
 
     local KeyInput = New("TextBox", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 30, 0, 0),
-        Size = UDim2.new(1, -38, 1, 0),
-        Font = Enum.Font.GothamBold,
-        PlaceholderText = "Enter premium key...",
-        PlaceholderColor3 = Color3.fromRGB(110, 85, 155),
-        Text = LoadSavedKey(),
-        TextColor3 = Color3.fromRGB(225, 205, 255),
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
+
+        Position =
+            UDim2.new(
+                0,
+                32,
+                0,
+                0
+            ),
+
+        Size =
+            UDim2.new(
+                1,
+                -42,
+                1,
+                0
+            ),
+
+        Font =
+            Enum.Font.GothamBold,
+
+        PlaceholderText = "hello",
+
+        PlaceholderColor3 =
+            Color3.fromRGB(
+                110,
+                85,
+                155
+            ),
+
+        Text =
+            API_CONFIG.REQUIRED_KEY,
+
+        TextColor3 =
+            Color3.fromRGB(
+                225,
+                205,
+                255
+            ),
+
+        TextSize = 12,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
         ClearTextOnFocus = false,
+
         ZIndex = 203,
-        Parent = InputBg
+
+        Parent = InputBg,
     })
+
+    --------------------------------------------------
+    -- FORCE KEY TO "hello"
+    --------------------------------------------------
+
+    KeyInput:GetPropertyChangedSignal("Text"):Connect(
+        function()
+            if KeyInput.Text ~= API_CONFIG.REQUIRED_KEY then
+                KeyInput.Text =
+                    API_CONFIG.REQUIRED_KEY
+            end
+        end
+    )
+
+    --------------------------------------------------
+    -- STATUS LABEL
+    --------------------------------------------------
 
     local StatusLabel = New("TextLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, RX, 0, 185),
-        Size = UDim2.new(0, RW, 0, 13),
-        Font = Enum.Font.GothamBold,
-        Text = "HWID: " .. GetHWID():sub(1, 12) .. "...",
-        TextColor3 = Color3.fromRGB(175, 155, 210),
+
+        Position =
+            UDim2.new(
+                0,
+                190,
+                0,
+                207
+            ),
+
+        Size =
+            UDim2.new(
+                0,
+                250,
+                0,
+                18
+            ),
+
+        Font =
+            Enum.Font.GothamBold,
+
+        Text =
+            "HWID: "
+            .. GetHWID():sub(1, 12)
+            .. "...",
+
+        TextColor3 =
+            Color3.fromRGB(
+                175,
+                155,
+                210
+            ),
+
         TextSize = 9,
-        TextXAlignment = Enum.TextXAlignment.Center,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Center,
+
         ZIndex = 202,
-        Parent = Card
+
+        Parent = Card,
     })
 
-    local function SetStatus(msg, col)
-        StatusLabel.Text = msg
-        StatusLabel.TextColor3 = col or Color3.fromRGB(175, 155, 210)
+    local function SetStatus(message, color)
+        StatusLabel.Text = message
+
+        StatusLabel.TextColor3 =
+            color
+            or Color3.fromRGB(
+                175,
+                155,
+                210
+            )
     end
+
+    --------------------------------------------------
+    -- CLOSE ANIMATION
+    --------------------------------------------------
 
     local function AnimateClose()
-        Tween(Card, { Size = UDim2.new(0, W * 0.65, 0, H * 0.65), BackgroundTransparency = 1 }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-        Tween(Backdrop, { BackgroundTransparency = 1 }, 0.20, Enum.EasingStyle.Quint)
-        task.delay(0.22, function()
-            SG:Destroy()
-            done = true
-        end)
+        if done then
+            return
+        end
+
+        done = true
+
+        Tween(
+            Card,
+            {
+                Size =
+                    UDim2.new(
+                        0,
+                        W * 0.65,
+                        0,
+                        H * 0.65
+                    ),
+
+                BackgroundTransparency = 1,
+            },
+            0.20,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.In
+        )
+
+        Tween(
+            Backdrop,
+            {
+                BackgroundTransparency = 1,
+            },
+            0.20,
+            Enum.EasingStyle.Quint
+        )
+
+        task.delay(
+            0.22,
+            function()
+                pcall(function()
+                    SG:Destroy()
+                end)
+            end
+        )
     end
 
-    local function SubmitKey(keyStr)
-        if submitting then return end
+    --------------------------------------------------
+    -- SUBMIT
+    --------------------------------------------------
+
+    local function SubmitKey()
+        if submitting then
+            return
+        end
+
         submitting = true
 
-        ResolveAndLoadKey(keyStr, {
-            onStatus = function(msg)
-                SetStatus(msg, Color3.fromRGB(175, 150, 255))
-            end,
+        KeyInput.Text =
+            API_CONFIG.REQUIRED_KEY
 
-            onSuccess = function(info)
-                submitting = false
-                isPremium = info.permanent
+        ResolveAndLoadKey(
+            API_CONFIG.REQUIRED_KEY,
+            {
+                onStatus = function(message)
+                    SetStatus(
+                        message,
+                        Color3.fromRGB(
+                            175,
+                            150,
+                            255
+                        )
+                    )
 
-                LRMStatusLabel.Text = info.permanent and "Premium Active" or "Time-Limited Key Active"
-                LRMStatusLabel.TextColor3 = Color3.fromRGB(80, 230, 130)
-                DisplayNameLbl.TextColor3 = Color3.fromRGB(130, 220, 160)
+                    StatusSystem.Text =
+                        "Authenticating..."
+                end,
 
-                local statusMsg = info.fellBack and ("Verified in " .. info.elapsedStr .. "! (fallback loader)") or ("Verified in " .. info.elapsedStr .. "! Loading...")
-                SetStatus(statusMsg, Color3.fromRGB(80, 230, 130))
+                onSuccess = function(info)
+                    submitting = false
 
-                Notify("Key Verified (" .. info.elapsedStr .. ")", "Expires: " .. ToTime(info.expire), Color3.fromRGB(80, 230, 130))
+                    StatusSystem.Text =
+                        info.permanent
+                        and "Premium Active"
+                        or "Time-Limited Key Active"
 
-                task.wait(0.3)
-                AnimateClose()
-            end,
+                    StatusSystem.TextColor3 =
+                        Color3.fromRGB(
+                            80,
+                            230,
+                            130
+                        )
 
-            onFail = function(code, message)
-                submitting = false
+                    SetStatus(
+                        "Verified in "
+                        .. info.elapsedStr
+                        .. "! Loading...",
+                        Color3.fromRGB(
+                            80,
+                            230,
+                            130
+                        )
+                    )
 
-                if code == "empty" then
-                    SetStatus("Please enter a key first.", Color3.fromRGB(255, 175, 80))
-                    return
-                elseif code == "sdk_unreachable" then
-                    SetStatus("Failed to reach Luarmor SDK.", Color3.fromRGB(255, 90, 110))
-                    Notify("Quantum Onyx", "Could not reach Luarmor SDK. Try again.", Color3.fromRGB(255, 90, 110))
-                    return
-                elseif code == "check_error" then
-                    SetStatus("Verification error — try again.", Color3.fromRGB(255, 90, 110))
-                    return
-                end
+                    Notify(
+                        "Key Verified",
+                        "Expires: "
+                        .. ToTime(info.expire),
+                        Color3.fromRGB(
+                            80,
+                            230,
+                            130
+                        ),
+                        6
+                    )
 
-                local msgMap = {
-                    KEY_HWID_LOCKED = "HWID mismatch — reset your key.",
-                    KEY_EXPIRED = "Key expired — get a new one.",
-                    KEY_BANNED = "Key is banned.",
-                    KEY_INCORRECT = "Key not found.",
-                }
-                local shown = msgMap[code] or tostring(message or ("Error: " .. tostring(code)))
-                SetStatus(shown, Color3.fromRGB(255, 90, 110))
-                Notify("Key Rejected", shown, Color3.fromRGB(255, 90, 110))
-            end,
-        })
+                    task.wait(0.3)
+
+                    AnimateClose()
+                end,
+
+                onFail = function(code, message)
+                    submitting = false
+
+                    StatusSystem.Text =
+                        "Authentication Failed"
+
+                    StatusSystem.TextColor3 =
+                        Color3.fromRGB(
+                            255,
+                            100,
+                            110
+                        )
+
+                    if code == "SERVER_REJECTED" then
+                        SetStatus(
+                            tostring(
+                                message
+                                or "Server rejected the key."
+                            ),
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            )
+                        )
+
+                        Notify(
+                            "Authentication Failed",
+                            tostring(
+                                message
+                                or "Server rejected the key."
+                            ),
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            ),
+                            7
+                        )
+
+                    elseif code == "HTTP_UNAVAILABLE" then
+                        SetStatus(
+                            "HTTP requests are unavailable.",
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            )
+                        )
+
+                    elseif code == "KEY_EXPIRED" then
+                        ClearKey()
+
+                        SetStatus(
+                            "Key expired.",
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            )
+                        )
+
+                    elseif code == "NO_SCRIPT" then
+                        SetStatus(
+                            "No Premium script was returned.",
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            )
+                        )
+
+                    else
+                        SetStatus(
+                            tostring(
+                                message
+                                or code
+                                or "Authentication failed."
+                            ),
+                            Color3.fromRGB(
+                                255,
+                                90,
+                                110
+                            )
+                        )
+                    end
+                end,
+            }
+        )
     end
 
-    local BtnY = 202
-    local BtnH = 30
-    local BtnGap = 6
-    local BtnW = math.floor((RW - BtnGap * 2) / 3)
+    --------------------------------------------------
+    -- BUTTONS
+    --------------------------------------------------
 
-    local function MakeBtn(label, px, w, bg, tc, cb)
-        local btn = New("TextButton", {
-            BackgroundColor3 = bg,
-            BackgroundTransparency = 0,
+    local ButtonY = 239
+    local ButtonHeight = 32
+
+    local function MakeButton(
+        text,
+        x,
+        width,
+        background,
+        textColor,
+        callback
+    )
+        local button = New("TextButton", {
+            BackgroundColor3 = background,
+
             BorderSizePixel = 0,
-            Position = UDim2.new(0, px, 0, BtnY),
-            Size = UDim2.new(0, w, 0, BtnH),
+
+            Position =
+                UDim2.new(
+                    0,
+                    x,
+                    0,
+                    ButtonY
+                ),
+
+            Size =
+                UDim2.new(
+                    0,
+                    width,
+                    0,
+                    ButtonHeight
+                ),
+
             AutoButtonColor = false,
+
             Text = "",
+
             ClipsDescendants = true,
+
             ZIndex = 202,
+
             Parent = Card,
+
             Children = {
-                New("UICorner", { CornerRadius = UDim.new(0, 7) }),
+                New("UICorner", {
+                    CornerRadius =
+                        UDim.new(0, 7),
+                }),
+
                 New("TextLabel", {
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Font = Enum.Font.FredokaOne,
-                    Text = label,
-                    TextColor3 = tc,
-                    TextSize = 13,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    ZIndex = 203
-                })
-            }
+
+                    Size =
+                        UDim2.new(
+                            1,
+                            0,
+                            1,
+                            0
+                        ),
+
+                    Font =
+                        Enum.Font.FredokaOne,
+
+                    Text = text,
+
+                    TextColor3 =
+                        textColor,
+
+                    TextSize = 12,
+
+                    TextXAlignment =
+                        Enum.TextXAlignment.Center,
+
+                    ZIndex = 203,
+                }),
+            },
         })
-        btn.MouseEnter:Connect(function() Tween(btn, { BackgroundColor3 = bg:Lerp(Color3.fromRGB(255, 255, 255), 0.15) }, 0.12) end)
-        btn.MouseLeave:Connect(function() Tween(btn, { BackgroundColor3 = bg }, 0.16) end)
-        btn.MouseButton1Click:Connect(function()
-            CircleRipple(btn, Mouse.X, Mouse.Y)
-            cb()
-        end)
-        return btn
+
+        button.MouseEnter:Connect(
+            function()
+                Tween(
+                    button,
+                    {
+                        BackgroundColor3 =
+                            background:Lerp(
+                                Color3.fromRGB(
+                                    255,
+                                    255,
+                                    255
+                                ),
+                                0.15
+                            ),
+                    },
+                    0.12
+                )
+            end
+        )
+
+        button.MouseLeave:Connect(
+            function()
+                Tween(
+                    button,
+                    {
+                        BackgroundColor3 =
+                            background,
+                    },
+                    0.16
+                )
+            end
+        )
+
+        button.MouseButton1Click:Connect(
+            function()
+                CircleRipple(
+                    button,
+                    Mouse.X,
+                    Mouse.Y
+                )
+
+                callback()
+            end
+        )
+
+        return button
     end
 
-    MakeBtn("Free Version", RX, BtnW, Color3.fromRGB(45, 20, 85), Color3.fromRGB(200, 165, 255), function()
-        if not Scripts.Free[gameId] then
-            SetStatus("No free version for this game.", Color3.fromRGB(255, 150, 80))
-        else
-            isPremium = false
+    local buttonGap = 8
+    local buttonWidth = 119
+
+    --------------------------------------------------
+    -- FREE BUTTON
+    --------------------------------------------------
+
+    MakeButton(
+        "Free Version",
+        190,
+        buttonWidth,
+        Color3.fromRGB(
+            45,
+            20,
+            85
+        ),
+        Color3.fromRGB(
+            200,
+            165,
+            255
+        ),
+        function()
+            if not Scripts.Free[gameId] then
+                SetStatus(
+                    "No free version for this game.",
+                    Color3.fromRGB(
+                        255,
+                        150,
+                        80
+                    )
+                )
+
+                return
+            end
+
             AnimateClose()
-            LoadScript("Free", nil)
+
+            task.wait(0.25)
+
+            LoadScript(
+                "Free",
+                nil
+            )
         end
-    end)
+    )
 
-    local panelOpen = false
-    local OptionPanel = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(15, 12, 24),
-        BackgroundTransparency = 0,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, RX + BtnW + BtnGap, 0, BtnY - 78),
-        Size = UDim2.new(0, BtnW, 0, 72),
-        ZIndex = 215,
-        Visible = false,
-        ClipsDescendants = false,
-        Parent = Card,
-        Children = {
-            New("UICorner", { CornerRadius = UDim.new(0, 7) }),
-            New("UIStroke", {
-                Color = Color3.fromRGB(120, 60, 220),
-                Transparency = 0.3,
-                Thickness = 1,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            }),
-        }
-    })
+    --------------------------------------------------
+    -- DISCORD BUTTON
+    --------------------------------------------------
 
-    local function MakeOptionBtn(label, yPos, link, statusMsg)
-        local btn = New("TextButton", {
-            BackgroundColor3 = Color3.fromRGB(40, 20, 80),
-            BackgroundTransparency = 0,
-            BorderSizePixel = 0,
-            Position = UDim2.new(0, 4, 0, yPos),
-            Size = UDim2.new(1, -8, 0, 30),
-            AutoButtonColor = false,
-            Text = label,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = Color3.fromRGB(210, 185, 255),
-            TextSize = 11,
-            ZIndex = 216,
-            Parent = OptionPanel,
-            Children = { New("UICorner", { CornerRadius = UDim.new(0, 5) }) }
-        })
-        btn.MouseEnter:Connect(function() Tween(btn, { BackgroundColor3 = Color3.fromRGB(60, 30, 110) }, 0.10) end)
-        btn.MouseLeave:Connect(function() Tween(btn, { BackgroundColor3 = Color3.fromRGB(40, 20, 80) }, 0.12) end)
-        btn.MouseButton1Click:Connect(function()
-            CircleRipple(btn, Mouse.X, Mouse.Y)
-            pcall(function() (setclipboard or toclipboard)(link) end)
-            SetStatus(statusMsg, Color3.fromRGB(105, 195, 255))
-            task.delay(0.12, function()
-                panelOpen = false
-                OptionPanel.Visible = false
+    MakeButton(
+        "Discord",
+        190 + buttonWidth + buttonGap,
+        buttonWidth,
+        Color3.fromRGB(
+            35,
+            45,
+            90
+        ),
+        Color3.fromRGB(
+            150,
+            195,
+            255
+        ),
+        function()
+            pcall(function()
+                (
+                    setclipboard
+                    or toclipboard
+                )(
+                    API_CONFIG.DISCORD_INVITE
+                )
             end)
-        end)
-        return btn
-    end
 
-    MakeOptionBtn("Lootlabs", 4, API_CONFIG.KEY_LINKS.Lootlabs, "Copied link!")
-    MakeOptionBtn("Linkvertise", 38, API_CONFIG.KEY_LINKS.Linkvertise, "Copied link!")
+            SetStatus(
+                "Discord invite copied!",
+                Color3.fromRGB(
+                    105,
+                    195,
+                    255
+                )
+            )
 
-    local getKeyBtn = MakeBtn("Get Key", RX + BtnW + BtnGap, BtnW, Color3.fromRGB(20, 45, 90), Color3.fromRGB(130, 195, 255), function()
-        panelOpen = not panelOpen
-        OptionPanel.Visible = panelOpen
-    end)
+            Notify(
+                "Quantum Onyx",
+                "Discord invite copied.",
+                Color3.fromRGB(
+                    105,
+                    195,
+                    255
+                ),
+                4
+            )
+        end
+    )
 
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if not panelOpen then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local pos = input.Position
-            local ap = OptionPanel.AbsolutePosition
-            local as = OptionPanel.AbsoluteSize
-            local onPanel = pos.X >= ap.X and pos.X <= ap.X + as.X and pos.Y >= ap.Y and pos.Y <= ap.Y + as.Y
-            local gkp = getKeyBtn.AbsolutePosition
-            local gks = getKeyBtn.AbsoluteSize
-            local onBtn = pos.X >= gkp.X and pos.X <= gkp.X + gks.X and pos.Y >= gkp.Y and pos.Y <= gkp.Y + gks.Y
-            if not onPanel and not onBtn then
-                panelOpen = false
-                OptionPanel.Visible = false
+    --------------------------------------------------
+    -- ENTER BUTTON
+    --------------------------------------------------
+
+    MakeButton(
+        "Enter Key",
+        190
+            + (buttonWidth + buttonGap) * 2,
+        buttonWidth,
+        Color3.fromRGB(
+            65,
+            25,
+            130
+        ),
+        Color3.fromRGB(
+            225,
+            180,
+            255
+        ),
+        function()
+            SubmitKey()
+        end
+    )
+
+    --------------------------------------------------
+    -- ENTER KEYBOARD
+    --------------------------------------------------
+
+    KeyInput.FocusLost:Connect(
+        function(enterPressed)
+            if enterPressed then
+                SubmitKey()
             end
         end
-    end)
-
-    MakeBtn("Enter Key", RX + (BtnW + BtnGap) * 2, BtnW, Color3.fromRGB(65, 25, 130), Color3.fromRGB(225, 180, 255), function()
-        SubmitKey(KeyInput.Text)
-    end)
-
-    KeyInput.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            SubmitKey(KeyInput.Text)
-        end
-    end)
+    )
 end
 
+--------------------------------------------------
+-- STARTUP
+--------------------------------------------------
+
 local function AuthenticateAndLoad()
-    local SavedKey = LoadSavedKey()
-    if SavedKey and #SavedKey > 0 then
+    -- The key is intentionally fixed.
+    local savedKey = LoadSavedKey()
+
+    if savedKey == API_CONFIG.REQUIRED_KEY then
+
         task.spawn(function()
-            ResolveAndLoadKey(SavedKey, {
-                onStatus = function() end,
-                onSuccess = function(info)
-                    Notify("Welcome Back", "Auto-logged in in " .. info.elapsedStr .. ".", Color3.fromRGB(80, 230, 130))
-                end,
-                onFail = function()
-                    ClearKey()
-                    ShowKeyUI()
-                end,
-            })
+            ResolveAndLoadKey(
+                API_CONFIG.REQUIRED_KEY,
+                {
+                    onStatus = function()
+                    end,
+
+                    onSuccess = function(info)
+                        Notify(
+                            "Welcome Back",
+                            "Authenticated in "
+                            .. info.elapsedStr
+                            .. ".",
+                            Color3.fromRGB(
+                                80,
+                                230,
+                                130
+                            ),
+                            5
+                        )
+                    end,
+
+                    onFail = function()
+                        ClearKey()
+                        ShowKeyUI()
+                    end,
+                }
+            )
         end)
+
     else
+        ClearKey()
         ShowKeyUI()
     end
 end
+
+--------------------------------------------------
+-- RUN
+--------------------------------------------------
 
 AuthenticateAndLoad()
